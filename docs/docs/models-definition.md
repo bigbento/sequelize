@@ -48,7 +48,21 @@ var Foo = sequelize.define('Foo', {
  hasComment: { type: Sequelize.INTEGER, comment: "I'm a comment!" },
 
  // You can specify a custom field name via the "field" attribute:
- fieldWithUnderscores: { type: Sequelize.STRING, field: "field_with_underscores" }
+ fieldWithUnderscores: { type: Sequelize.STRING, field: "field_with_underscores" },
+
+ // It is possible to create foreign keys:
+ bar_id: {
+   type: Sequelize.INTEGER,
+
+   // This is a reference to another model
+   references: Bar,
+
+   // This is the column name of the referenced model
+   referencesKey: 'id',
+
+   // This declares when to check the foreign key constraint. PostgreSQL only.
+   referencesDeferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
+ }
 })
 ```
 
@@ -123,6 +137,25 @@ sequelize.define('model', {
 })
 ```
 
+## Deferrable
+
+When you specify a foreign key column it is optionally possible to declare the deferrable
+type in PostgreSQL. The following options are available:
+
+```js
+// Defer all foreign key constraint check to the end of a transaction
+Sequelize.Deferrable.INITIALLY_DEFERRED
+
+// Immediately check the foreign key constraints
+Sequelize.Deferrable.INITIALLY_IMMEDIATE
+
+// Don't defer the checks at all
+Sequelize.Deferrable.NOT
+```
+
+The last option is the default in PostgreSQL and won't allow you to dynamically change
+the rule in a transaction. See [the transaction section](docs/transactions/#options) for further information.
+
 ## Getters & setters
 
 It is possible to define 'object-property' getters and setter functions on your models, these can be used both for 'protecting' properties that map to database fields and for defining 'pseudo' properties.
@@ -142,7 +175,7 @@ var Employee = sequelize.define('Employee', {
     type     : Sequelize.STRING,
     allowNull: false,
     get      : function()  {
-      var title = this.getDataValue('title'); 
+      var title = this.getDataValue('title');
       // 'this' allows you to access attributes of the instance
       return this.getDataValue('name') + ' (' + title + ')';
     },
@@ -180,7 +213,7 @@ var Foo = sequelize.define('Foo', {
   },
 
   setterMethods   : {
-    fullName       : function(value) { 
+    fullName       : function(value) {
         var names = value.split(' ');
 
         this.setDataValue('firstname', names.slice(0, -1).join(' '));
@@ -1098,7 +1131,7 @@ Company.findAll({
 ```
 
 ### Nested eager loading
-You can used nested eager loading to load all related models of a related model: 
+You can used nested eager loading to load all related models of a related model:
 ```js
 User.findAll({
   include: [
@@ -1130,7 +1163,7 @@ User.findAll({
 })
 ```
 
-Include all also supports nested loading: 
+Include all also supports nested loading:
 
 ```js
 User.findAll({ include: [{ all: true, nested: true }]});
